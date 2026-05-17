@@ -109,6 +109,12 @@ function CommitmentBadge({ commitment }) {
           </button>
         </div>
       )}
+      {commitment.txHash && (
+        <a href={commitment.explorerUrl} target="_blank" rel="noopener noreferrer"
+          className="explorer-link" style={{ fontSize: 10, color: 'var(--accent)', display: 'flex', alignItems: 'center', gap: 4, marginTop: 2 }}>
+          View Settlement Tx <ExternalLink size={9} />
+        </a>
+      )}
     </div>
   );
 }

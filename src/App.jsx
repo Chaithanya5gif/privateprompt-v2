@@ -69,8 +69,8 @@ function TokenBadge({ token, value, category, revealed, onReveal }) {
 function CommitmentBadge({ commitment }) {
   const [copied, setCopied] = useState(false);
   const statusColors = {
-    pending: '#f59e0b', computing: '#818cf8',
-    signing: '#60a5fa', broadcasting: '#34d399', confirmed: '#22c55e',
+    pending: '#f59e0b', computing: 'var(--accent)',
+    signing: '#60a5fa', broadcasting: '#34d399', confirmed: '#10b981',
   };
   const statusLabels = {
     pending: 'Pending...', computing: 'Computing hash...',
@@ -102,12 +102,6 @@ function CommitmentBadge({ commitment }) {
           </button>
         </div>
       )}
-      {commitment.txHash && (
-        <a href={commitment.explorerUrl} target="_blank" rel="noopener noreferrer"
-          className="explorer-link" style={{ fontSize: 10, color: '#818cf8', display: 'flex', alignItems: 'center', gap: 4 }}>
-          View on Explorer <ExternalLink size={9} />
-        </a>
-      )}
     </div>
   );
 }
@@ -120,7 +114,7 @@ function MessageBubble({ message, tokenMap }) {
     <div className={`message-wrapper ${isUser ? 'user' : 'ai'}`}>
       {!isUser && (
         <div className="ai-avatar">
-          <Shield size={14} color="#818cf8" />
+          <Shield size={14} color="var(--accent)" />
         </div>
       )}
       <div className={`message-bubble ${isUser ? 'user-bubble' : 'ai-bubble'}`}>
@@ -141,13 +135,13 @@ function MessageBubble({ message, tokenMap }) {
             <span style={{ fontSize: 10, color: 'var(--text-dim)', display: 'block', marginBottom: 4 }}>
               Anonymized prompt sent to Claude:
             </span>
-            <code style={{ fontSize: 11, color: '#818cf8', wordBreak: 'break-word' }}>
+            <code style={{ fontSize: 11, color: 'var(--accent)', wordBreak: 'break-word' }}>
               {message.anonymized}
             </code>
           </div>
         )}
         {message.newTokens?.length > 0 && (
-          <div className="message-token-count" style={{ color: '#22c55e' }}>
+          <div className="message-token-count" style={{ color: 'var(--green)' }}>
             <ShieldCheck size={10} /> {message.newTokens.length} item{message.newTokens.length > 1 ? 's' : ''} protected
           </div>
         )}
@@ -333,7 +327,7 @@ export default function App() {
       <header className="header">
         <div className="header-brand">
           <div className="brand-icon">
-            <Shield size={18} color="#818cf8" />
+            <Shield size={18} color="var(--accent)" />
           </div>
           <div>
             <h1 className="brand-name">PrivatePrompt <span className="brand-v2">V2</span></h1>
@@ -363,7 +357,7 @@ export default function App() {
           {messages.length === 0 ? (
             <div className="empty-state">
               <div className="empty-icon">
-                <ShieldCheck size={40} color="#818cf8" />
+                <ShieldCheck size={40} color="var(--accent)" />
               </div>
               <h2>Your data, cryptographically protected.</h2>
               <p>
@@ -390,7 +384,7 @@ export default function App() {
               ))}
               {isLoading && (
                 <div className="message-wrapper ai">
-                  <div className="ai-avatar"><Shield size={14} color="#818cf8" /></div>
+                  <div className="ai-avatar"><Shield size={14} color="var(--accent)" /></div>
                   <div className="ai-bubble thinking-bubble">
                     <span className="thinking-dot" /><span className="thinking-dot" /><span className="thinking-dot" />
                   </div>
@@ -524,7 +518,7 @@ export default function App() {
 
               {allTokens.length === 0 && (
                 <div className="panel-empty">
-                  <ShieldCheck size={28} color="rgba(129,140,248,0.3)" />
+                  <ShieldCheck size={28} color="var(--accent-glow)" />
                   <p>Start chatting to see your privacy shield in action.</p>
                 </div>
               )}
@@ -541,7 +535,7 @@ export default function App() {
               </div>
               {commitments.length === 0 ? (
                 <div className="panel-empty">
-                  <Zap size={28} color="rgba(129,140,248,0.3)" />
+                  <Zap size={28} color="var(--accent-glow)" />
                   <p>Your on-chain privacy receipts will appear here.</p>
                 </div>
               ) : (

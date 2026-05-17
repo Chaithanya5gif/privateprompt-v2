@@ -25,6 +25,12 @@ export async function sendToClaude(conversationHistory, apiKey) {
     throw new Error('Claude API key is required. Please add it in settings.');
   }
 
+  if (apiKey === 'mock') {
+    return new Promise(resolve => setTimeout(() => resolve(
+      "Yes, based on the information provided, [NAME_1] would be eligible for this health plan even with a pre-existing condition like [MEDICAL_1], and the plan provides solid coverage for individuals with an income of [FINANCIAL_1]."
+    ), 1500));
+  }
+
   const response = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
     headers: {
@@ -34,7 +40,7 @@ export async function sendToClaude(conversationHistory, apiKey) {
       'anthropic-dangerous-direct-browser-access': 'true',
     },
     body: JSON.stringify({
-      model: 'claude-sonnet-4-5',
+      model: 'claude-3-5-sonnet-20241022',
       max_tokens: 1024,
       system: SYSTEM_PROMPT,
       messages: conversationHistory,

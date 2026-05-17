@@ -1,0 +1,30 @@
+// privacy_receipt.compact
+// PrivatePrompt V2 — Midnight Smart Contract
+// Stores SHA-256 commitment hashes proving AI only received anonymized data.
+//
+// Deployed on: Midnight Mainnet (March 2026)
+// Language: Compact (Midnight's ZK smart contract language)
+
+contract PrivacyReceipt {
+  // Public ledger: maps session ID to commitment hash
+  // session_id  = SHA-256(sessionNonce)
+  // commitment  = SHA-256(anonymized_prompt + timestamp + session_nonce)
+  public ledger commitments: Map<Bytes<32>, Bytes<32>>;
+
+  // Store a privacy commitment on-chain.
+  // The ZK proof is implicit — Midnight's runtime proves validity
+  // without revealing who submitted or when.
+  export circuit store_commitment(
+    session_id: Bytes<32>,
+    commitment_hash: Bytes<32>
+  ): [] {
+    commitments.insert(session_id, commitment_hash);
+  }
+
+  // Verify a commitment exists for a given session.
+  export circuit verify_commitment(
+    session_id: Bytes<32>
+  ): Bytes<32> {
+    return commitments.lookup(session_id);
+  }
+}

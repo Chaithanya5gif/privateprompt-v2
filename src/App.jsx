@@ -366,8 +366,9 @@ export default function App() {
     setIsLoading(true);
 
     // EMERGENCY LOCAL AI INTERCEPT
-    const hasCritical = newTokens.some(t => getThreatLevel(t.category).level === 'Critical');
-    if (hasCritical || computePrivacyScore(newTokens) < 70) {
+    const criticalCount = newTokens.filter(t => getThreatLevel(t.category).level === 'Critical').length;
+    const currentScore = computePrivacyScore(newTokens);
+    if (criticalCount >= 5 || currentScore < 30) {
       setTimeout(() => {
         setIsLoading(false);
         setMessages(prev => [...prev, {

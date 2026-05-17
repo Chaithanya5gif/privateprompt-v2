@@ -12,6 +12,7 @@
   "dependencies": {
     "compromise": "^14.15.0",
     "lucide-react": "^1.16.0",
+    "pdfjs-dist": "^5.7.284",
     "react": "^19.2.6",
     "react-dom": "^19.2.6"
   },

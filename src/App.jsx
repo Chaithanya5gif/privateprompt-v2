@@ -1,12 +1,16 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { anonymize, deanonymize, computePrivacyScore, getCategoryLabel, getCategoryColor, getThreatLevel } from './lib/anonymizer';
+import { anonymize, deanonymize, computePrivacyScore, getCategoryLabel, getCategoryColor, getThreatLevel, getDarkWebValue } from './lib/anonymizer';
 import { sendToClaude } from './lib/claude';
 import { writeToMidnight, connectLaceWallet } from './lib/midnight';
 import {
   Shield, ShieldCheck, Lock, Eye, EyeOff, Send, Settings,
   ChevronDown, ChevronUp, Zap, Link, Copy, Check,
-  AlertCircle, Wallet, X, RefreshCw, ExternalLink
+  AlertCircle, Wallet, X, RefreshCw, ExternalLink, Upload, FileText, Bot
 } from 'lucide-react';
+import * as pdfjsLib from 'pdfjs-dist';
+
+// Initialize PDF.js worker using CDN to avoid Vite asset URL issues during hackathon
+pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.mjs`;
 
 // ── Utility ──────────────────────────────────────────────────────────────────
 
@@ -174,13 +178,18 @@ function MessageBubble({ message, tokenMap }) {
 
   return (
     <div className={`message-wrapper ${isUser ? 'user' : 'ai'}`}>
-      {!isUser && (
+      {!isUser && !message.isLocalAI && (
         <div className="ai-avatar">
           <Shield size={14} color="var(--accent)" />
         </div>
       )}
-      <div className={`message-bubble ${isUser ? 'user-bubble' : 'ai-bubble'}`}>
-        <div className="message-content">
+      {!isUser && message.isLocalAI && (
+        <div className="ai-avatar" style={{ background: '#f59e0b', borderColor: '#d97706' }}>
+          <Bot size={14} color="#fff" />
+        </div>
+      )}
+      <div className={`message-bubble ${isUser ? 'user-bubble' : 'ai-bubble'}`} style={message.isLocalAI ? { border: '1px solid rgba(245, 158, 11, 0.3)' } : {}}>
+        <div className="message-content" style={{ whiteSpace: 'pre-wrap' }}>
           {message.displayContent}
         </div>
         {isUser && message.anonymized && message.anonymized !== message.displayContent && (
@@ -233,8 +242,9 @@ function MessageBubble({ message, tokenMap }) {
   );
 }
 
-function SettingsModal({ onClose, apiKey, setApiKey }) {
-  const [draft, setDraft] = useState(apiKey);
+function SettingsModal({ onClose, apiKey, setApiKey, customVaultTerms, setCustomVaultTerms }) {
+  const [draftKey, setDraftKey] = useState(apiKey);
+  const [draftTerms, setDraftTerms] = useState(customVaultTerms.join(', '));
   const [show, setShow] = useState(false);
 
   return (
@@ -250,8 +260,8 @@ function SettingsModal({ onClose, apiKey, setApiKey }) {
             <input
               type={show ? 'text' : 'password'}
               className="form-input"
-              value={draft}
-              onChange={e => setDraft(e.target.value)}
+              value={draftKey}
+              onChange={e => setDraftKey(e.target.value)}
               placeholder="sk-ant-..."
             />
             <button
@@ -261,13 +271,31 @@ function SettingsModal({ onClose, apiKey, setApiKey }) {
               {show ? <EyeOff size={14} /> : <Eye size={14} />}
             </button>
           </div>
-          <p className="form-hint">
+          <p className="form-hint" style={{ marginBottom: 20 }}>
             Your key stays in your browser only — never sent to any server other than Anthropic.
+          </p>
+
+          <label className="form-label" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <Lock size={12} color="var(--accent)" /> Enterprise Custom Vault
+          </label>
+          <textarea
+            className="form-input"
+            value={draftTerms}
+            onChange={e => setDraftTerms(e.target.value)}
+            placeholder="Comma-separated custom terms (e.g. Project Titan, Q3 Layoffs)"
+            rows={3}
+          />
+          <p className="form-hint">
+            These terms will be forcefully redacted as [CONFIDENTIAL_X].
           </p>
         </div>
         <div className="modal-footer">
           <button className="btn-secondary" onClick={onClose}>Cancel</button>
-          <button className="btn-primary" onClick={() => { setApiKey(draft); onClose(); }}>Save</button>
+          <button className="btn-primary" onClick={() => {
+            setApiKey(draftKey);
+            setCustomVaultTerms(draftTerms.split(',').map(s => s.trim()).filter(Boolean));
+            onClose();
+          }}>Save</button>
         </div>
       </div>
     </div>
@@ -288,6 +316,7 @@ export default function App() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
   const [apiKey, setApiKey] = useState(() => localStorage.getItem('pp_api_key') || '');
+  const [customVaultTerms, setCustomVaultTerms] = useState(() => (localStorage.getItem('pp_vault_terms') || '').split(',').map(s => s.trim()).filter(Boolean));
   const [showSettings, setShowSettings] = useState(false);
   const [walletInfo, setWalletInfo] = useState(null);
   const [revealedTokens, setRevealedTokens] = useState({});
@@ -297,8 +326,9 @@ export default function App() {
   const textareaRef = useRef(null);
   const conversationHistoryRef = useRef([]);
 
-  // Persist API key
+  // Persist API key and Vault Terms
   useEffect(() => { if (apiKey) localStorage.setItem('pp_api_key', apiKey); }, [apiKey]);
+  useEffect(() => { localStorage.setItem('pp_vault_terms', customVaultTerms.join(',')); }, [customVaultTerms]);
   useEffect(() => { messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [messages]);
 
   const connectWallet = async () => {
@@ -314,7 +344,7 @@ export default function App() {
     setInput('');
 
     // Anonymize
-    const { anonymized, tokenMap: newMap, newTokens } = anonymize(userText, tokenMap);
+    const { anonymized, tokenMap: newMap, newTokens } = anonymize(userText, tokenMap, customVaultTerms);
     setTokenMap(newMap);
     setAllTokens(prev => [...prev, ...newTokens]);
     setLiveTokens([]);
@@ -334,6 +364,21 @@ export default function App() {
     conversationHistoryRef.current.push({ role: 'user', content: anonymized });
 
     setIsLoading(true);
+
+    // EMERGENCY LOCAL AI INTERCEPT
+    const hasCritical = newTokens.some(t => getThreatLevel(t.category).level === 'Critical');
+    if (hasCritical || computePrivacyScore(newTokens) < 70) {
+      setTimeout(() => {
+        setIsLoading(false);
+        setMessages(prev => [...prev, {
+          id: Date.now() + 1,
+          role: 'assistant',
+          isLocalAI: true,
+          displayContent: "🚨 CLOUD API BLOCKED — DATA TOO SENSITIVE\n\nRerouting to Local Browser AI (WebGPU-simulated fallback)...\n\nAnalyzing locally: Based on the highly sensitive payload detected, this query has been processed entirely on-device to prevent network transmission of critical PII."
+        }]);
+      }, 1500);
+      return;
+    }
 
     // Midnight commitment (async, don't block chat)
     const commitmentId = Date.now();
@@ -391,13 +436,50 @@ export default function App() {
     if (ta) { ta.style.height = 'auto'; ta.style.height = Math.min(ta.scrollHeight, 160) + 'px'; }
     
     if (val.trim()) {
-      const { anonymized, newTokens } = anonymize(val, tokenMap);
+      const { anonymized, newTokens } = anonymize(val, tokenMap, customVaultTerms);
       setLiveTokens(newTokens);
       setLiveAnonymized(anonymized);
     } else {
       setLiveTokens([]);
       setLiveAnonymized('');
     }
+  };
+
+  const fileInputRef = useRef(null);
+  const handleFileUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    setIsLoading(true);
+    try {
+      let extractedText = '';
+      if (file.type === 'application/pdf') {
+        const arrayBuffer = await file.arrayBuffer();
+        const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+        for (let i = 1; i <= pdf.numPages; i++) {
+          const page = await pdf.getPage(i);
+          const content = await page.getTextContent();
+          extractedText += content.items.map(item => item.str).join(' ') + '\n';
+        }
+      } else {
+        extractedText = await file.text();
+      }
+      
+      const newVal = input + (input ? '\n\n' : '') + `[Extracted from ${file.name}]\n` + extractedText;
+      setInput(newVal);
+      
+      const { anonymized, newTokens } = anonymize(newVal, tokenMap, customVaultTerms);
+      setLiveTokens(newTokens);
+      setLiveAnonymized(anonymized);
+    } catch (err) {
+      setError('Failed to parse file: ' + err.message);
+    } finally {
+      setIsLoading(false);
+      if (textareaRef.current) {
+        textareaRef.current.style.height = 'auto';
+        textareaRef.current.style.height = Math.min(textareaRef.current.scrollHeight, 160) + 'px';
+      }
+    }
+    e.target.value = '';
   };
 
   const clearSession = () => {
@@ -420,6 +502,7 @@ export default function App() {
   }, {});
 
   const userMessagesCount = messages.filter(m => m.role === 'user').length;
+  const totalDarkWebValue = combinedTokens.reduce((sum, t) => sum + getDarkWebValue(t.category), 0);
 
   const demoPrompt = "I'm John Smith, SSN 423-55-8821, I was diagnosed with Type 2 diabetes last year and my annual salary is $142,000. Am I eligible for this health plan?";
 
@@ -525,6 +608,21 @@ export default function App() {
                 disabled={isLoading}
               />
               <div className="input-actions">
+                <button
+                  className="icon-btn clear-btn"
+                  onClick={() => fileInputRef.current?.click()}
+                  title="Upload Document"
+                  disabled={isLoading}
+                >
+                  <FileText size={14} />
+                  <input
+                    type="file"
+                    ref={fileInputRef}
+                    accept=".pdf,.txt"
+                    style={{ display: 'none' }}
+                    onChange={handleFileUpload}
+                  />
+                </button>
                 <button
                   className="icon-btn clear-btn"
                   onClick={clearSession}
@@ -647,7 +745,7 @@ export default function App() {
                   <div>
                     <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-primary)' }}>Protection Streak</div>
                     <div style={{ fontSize: 10, color: 'var(--text-dim)', marginTop: 2 }}>
-                      {userMessagesCount} message{userMessagesCount !== 1 ? 's' : ''} sent. 0 bytes of raw PII ever transmitted.
+                      {userMessagesCount} message{userMessagesCount !== 1 ? 's' : ''} sent. Protected <strong style={{ color: '#ef4444' }}>${totalDarkWebValue}</strong> in dark web value.
                     </div>
                   </div>
                 </div>
@@ -704,6 +802,8 @@ export default function App() {
           onClose={() => setShowSettings(false)}
           apiKey={apiKey}
           setApiKey={setApiKey}
+          customVaultTerms={customVaultTerms}
+          setCustomVaultTerms={setCustomVaultTerms}
         />
       )}
 

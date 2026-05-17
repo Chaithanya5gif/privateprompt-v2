@@ -93,9 +93,10 @@ const PATTERNS = [
  * Anonymize a text string by detecting and replacing PII with tokens.
  * @param {string} text - Raw user input
  * @param {Object} existingTokenMap - Existing session token map (for consistency)
+ * @param {Array} customVaultTerms - Array of user-defined terms to redact
  * @returns {{ anonymized: string, tokenMap: Object, newTokens: Array }}
  */
-export function anonymize(text, existingTokenMap = {}) {
+export function anonymize(text, existingTokenMap = {}, customVaultTerms = []) {
   const tokenMap = { ...existingTokenMap };
   const newTokens = [];
   let result = text;
@@ -127,6 +128,14 @@ export function anonymize(text, existingTokenMap = {}) {
     newTokens.push({ token, value, category });
     return token;
   };
+
+  // 0. Custom Vault Terms (highest priority)
+  for (const term of customVaultTerms) {
+    if (!term || term.trim().length < 2) continue;
+    const escapedTerm = term.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const termRegex = new RegExp(`\\b${escapedTerm}\\b`, 'gi');
+    result = result.replace(termRegex, (match) => getToken('CONFIDENTIAL', match));
+  }
 
   // 1. Regex-based patterns (apply before NLP to avoid double-matching)
   for (const { category, regex } of PATTERNS) {
@@ -239,6 +248,7 @@ export function getCategoryLabel(category) {
     CREDIT_CARD: 'Credit Card',
     AGE: 'Age',
     ZIP_CODE: 'ZIP Code',
+    CONFIDENTIAL: 'Custom Vault Term',
   };
   return labels[category] || category;
 }
@@ -263,6 +273,7 @@ export function getCategoryColor(category) {
     CREDIT_CARD: '#ef4444',
     AGE: '#c084fc',
     ZIP_CODE: '#6b7280',
+    CONFIDENTIAL: '#14b8a6', // Teal
   };
   return colors[category] || '#6b7280';
 }
@@ -274,11 +285,31 @@ export function getThreatLevel(category) {
   if (['SSN', 'CREDIT_CARD', 'MEDICAL', 'DRUG', 'DATE_OF_BIRTH'].includes(category)) {
     return { level: 'Critical', color: '#ef4444', bg: 'rgba(239,68,68,0.15)' }; // Red
   }
-  if (['FINANCIAL', 'EMAIL', 'PHONE', 'IP_ADDRESS'].includes(category)) {
+  if (['FINANCIAL', 'EMAIL', 'PHONE', 'IP_ADDRESS', 'CONFIDENTIAL'].includes(category)) {
     return { level: 'Sensitive', color: '#f97316', bg: 'rgba(249,115,22,0.15)' }; // Orange
   }
   if (['NAME', 'AGE'].includes(category)) {
     return { level: 'Personal', color: '#eab308', bg: 'rgba(234,179,8,0.15)' }; // Yellow
   }
   return { level: 'Low', color: '#6b7280', bg: 'rgba(107,114,128,0.15)' }; // Gray
+}
+
+/**
+ * Get estimated dark web monetary value for a PII token category
+ */
+export function getDarkWebValue(category) {
+  const values = {
+    SSN: 15,
+    CREDIT_CARD: 30,
+    MEDICAL: 250,
+    DRUG: 50,
+    FINANCIAL: 50,
+    EMAIL: 2,
+    PHONE: 5,
+    NAME: 1,
+    IP_ADDRESS: 3,
+    DATE_OF_BIRTH: 5,
+    CONFIDENTIAL: 500, // Custom proprietary terms are highly valuable
+  };
+  return values[category] || 0;
 }

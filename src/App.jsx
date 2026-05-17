@@ -73,7 +73,56 @@ function TokenBadge({ token, value, category, revealed, onReveal }) {
   );
 }
 
-function CommitmentBadge({ commitment }) {
+function SimulatedExplorerModal({ commitment, onClose }) {
+  return (
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal" onClick={e => e.stopPropagation()} style={{ width: 500, maxWidth: '90%' }}>
+        <div className="modal-header" style={{ borderBottom: '1px solid var(--border)', paddingBottom: 16 }}>
+          <h3 style={{ display: 'flex', alignItems: 'center', gap: 6, margin: 0 }}>
+            <Zap size={16} color="var(--accent)" /> Midnight Explorer (Simulation)
+          </h3>
+          <button className="icon-btn" onClick={onClose}><X size={16} /></button>
+        </div>
+        <div className="modal-body" style={{ background: 'var(--bg-main)' }}>
+          <div style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.2)', padding: 12, borderRadius: 8, marginBottom: 16 }}>
+            <span style={{ fontSize: 12, color: '#ef4444', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 6 }}>
+              <AlertCircle size={14} /> Local Simulation Mode
+            </span>
+            <p style={{ fontSize: 11, color: 'var(--text-dim)', marginTop: 4, lineHeight: 1.4 }}>
+              This transaction was not broadcast to the Midnight testnet/mainnet. This is a local dry-run demonstrating the exact cryptographic commitment payload that would be written on-chain via the Midnight.js SDK and Lace wallet.
+            </p>
+          </div>
+          
+          <div style={{ marginBottom: 16 }}>
+            <label style={{ fontSize: 10, color: 'var(--text-dim)', textTransform: 'uppercase', fontWeight: 700 }}>Transaction Hash</label>
+            <div style={{ fontFamily: 'monospace', fontSize: 12, color: 'var(--text-primary)', wordBreak: 'break-all', background: 'var(--bg-card)', padding: 8, borderRadius: 6, marginTop: 4 }}>
+              {commitment.txHash}
+            </div>
+          </div>
+
+          <div style={{ marginBottom: 16 }}>
+            <label style={{ fontSize: 10, color: 'var(--text-dim)', textTransform: 'uppercase', fontWeight: 700 }}>SHA-256 Commitment</label>
+            <div style={{ fontFamily: 'monospace', fontSize: 12, color: 'var(--text-primary)', wordBreak: 'break-all', background: 'var(--bg-card)', padding: 8, borderRadius: 6, marginTop: 4 }}>
+              {commitment.commitment}
+            </div>
+          </div>
+
+          <div style={{ marginBottom: 16 }}>
+            <label style={{ fontSize: 10, color: 'var(--text-dim)', textTransform: 'uppercase', fontWeight: 700 }}>Raw Payload (Pre-Hash)</label>
+            <div style={{ fontFamily: 'monospace', fontSize: 11, color: 'var(--text-primary)', wordBreak: 'break-all', background: 'var(--bg-card)', padding: 8, borderRadius: 6, marginTop: 4, whiteSpace: 'pre-wrap' }}>
+              {commitment.payload}
+            </div>
+            <p style={{ fontSize: 10, color: 'var(--text-dim)', marginTop: 4 }}>
+              Format: <code>anonymized_prompt::timestamp::session_nonce</code>
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function CommitmentBadge({ commitment, onOpenExplorer }) {
   const [copied, setCopied] = useState(false);
   const statusColors = {
     pending: '#f59e0b', computing: 'var(--accent)',
@@ -109,11 +158,10 @@ function CommitmentBadge({ commitment }) {
           </button>
         </div>
       )}
-      {commitment.txHash && (
-        <a href={commitment.explorerUrl} target="_blank" rel="noopener noreferrer"
-          className="explorer-link" style={{ fontSize: 10, color: 'var(--accent)', display: 'flex', alignItems: 'center', gap: 4, marginTop: 2 }}>
-          View Settlement Tx <ExternalLink size={9} />
-        </a>
+      {commitment.txHash && onOpenExplorer && (
+        <button onClick={() => onOpenExplorer(commitment)} className="explorer-link" style={{ fontSize: 10, color: 'var(--accent)', display: 'flex', alignItems: 'center', gap: 4, marginTop: 4, background: 'none', border: 'none', padding: 0, cursor: 'pointer', outline: 'none' }}>
+          View Simulated Record <ExternalLink size={9} />
+        </button>
       )}
     </div>
   );
@@ -244,6 +292,7 @@ export default function App() {
   const [walletInfo, setWalletInfo] = useState(null);
   const [revealedTokens, setRevealedTokens] = useState({});
   const [panelTab, setPanelTab] = useState('shield'); // shield | history
+  const [simulatedExplorerData, setSimulatedExplorerData] = useState(null);
   const messagesEndRef = useRef(null);
   const textareaRef = useRef(null);
   const conversationHistoryRef = useRef([]);
@@ -529,7 +578,7 @@ export default function App() {
                       : `${combinedTokens.length} item${combinedTokens.length > 1 ? 's' : ''} protected`
                     }
                   </div>
-                  {commitments.length > 0 && <CommitmentBadge commitment={commitments[commitments.length - 1]} />}
+                  {commitments.length > 0 && <CommitmentBadge commitment={commitments[commitments.length - 1]} onOpenExplorer={setSimulatedExplorerData} />}
                 </div>
               </div>
 
@@ -625,7 +674,7 @@ export default function App() {
                     <div key={c.id} className="commitment-card">
                       <div className="commitment-card-header">
                         <span className="commitment-index">#{commitments.length - i}</span>
-                        <CommitmentBadge commitment={c} />
+                        <CommitmentBadge commitment={c} onOpenExplorer={setSimulatedExplorerData} />
                       </div>
                     </div>
                   ))}
@@ -655,6 +704,13 @@ export default function App() {
           onClose={() => setShowSettings(false)}
           apiKey={apiKey}
           setApiKey={setApiKey}
+        />
+      )}
+
+      {simulatedExplorerData && (
+        <SimulatedExplorerModal
+          commitment={simulatedExplorerData}
+          onClose={() => setSimulatedExplorerData(null)}
         />
       )}
     </div>

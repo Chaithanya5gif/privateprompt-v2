@@ -45,26 +45,20 @@ export async function writeToMidnight(anonymizedPrompt, sessionNonce, onStatusCh
   
   onStatusChange('broadcasting');
   
-  // Simulate network broadcast delay
-  await new Promise(r => setTimeout(r, 800));
-  
-  // Generate a realistic-looking Midnight transaction hash by using real Cardano Preprod txs
-  // since Midnight settles proofs on Cardano.
-  const realisticHashes = [
-    '1e9d21a1a75f62216394c60f7e51d57f8d8b4aa3523913c5aa4c4270a4dd6626',
-    'aaebf08d6dbefa68e8339d2ca15a1e5a9e50c63370c13d6a0ad0886a281d53a6',
-    '68fd0bf1338e0e734758d80601d21c5089bed2477ffee8fd7c877c644c13af88'
-  ];
-  const txHash = realisticHashes[Math.floor(Math.random() * realisticHashes.length)];
+  // Generate a realistic-looking Midnight transaction hash for simulation
+  const txHashBytes = new Uint8Array(32);
+  crypto.getRandomValues(txHashBytes);
+  const txHash = '0x' + Array.from(txHashBytes).map(b => b.toString(16).padStart(2, '0')).join('');
   
   onStatusChange('confirmed');
   
   return {
     txHash,
-    explorerUrl: `https://preprod.cardanoscan.io/transaction/${txHash}`,
+    simulated: true,
     commitment: hash,
     timestamp,
     sessionNonce,
+    payload: `${anonymizedPrompt}::${timestamp}::${sessionNonce}`
   };
 }
 

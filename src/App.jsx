@@ -315,7 +315,7 @@ export default function App() {
   const [sessionNonce] = useState(generateSessionNonce);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [apiKey, setApiKey] = useState(() => localStorage.getItem('pp_api_key') || '');
+  const [apiKey, setApiKey] = useState(() => localStorage.getItem('pp_api_key') || import.meta.env.VITE_ANTHROPIC_API_KEY || '');
   const [customVaultTerms, setCustomVaultTerms] = useState(() => (localStorage.getItem('pp_vault_terms') || '').split(',').map(s => s.trim()).filter(Boolean));
   const [showSettings, setShowSettings] = useState(false);
   const [walletInfo, setWalletInfo] = useState(null);

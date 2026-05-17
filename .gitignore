@@ -47,3 +47,5 @@ coverage/
 .eslintcache
 .npm
 .cache
+.env
+.env.local

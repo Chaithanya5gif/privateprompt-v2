@@ -266,3 +266,19 @@ export function getCategoryColor(category) {
   };
   return colors[category] || '#6b7280';
 }
+
+/**
+ * Get threat level for category
+ */
+export function getThreatLevel(category) {
+  if (['SSN', 'CREDIT_CARD', 'MEDICAL', 'DRUG', 'DATE_OF_BIRTH'].includes(category)) {
+    return { level: 'Critical', color: '#ef4444', bg: 'rgba(239,68,68,0.15)' }; // Red
+  }
+  if (['FINANCIAL', 'EMAIL', 'PHONE', 'IP_ADDRESS'].includes(category)) {
+    return { level: 'Sensitive', color: '#f97316', bg: 'rgba(249,115,22,0.15)' }; // Orange
+  }
+  if (['NAME', 'AGE'].includes(category)) {
+    return { level: 'Personal', color: '#eab308', bg: 'rgba(234,179,8,0.15)' }; // Yellow
+  }
+  return { level: 'Low', color: '#6b7280', bg: 'rgba(107,114,128,0.15)' }; // Gray
+}

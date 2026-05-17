@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { anonymize, deanonymize, computePrivacyScore, getCategoryLabel, getCategoryColor } from './lib/anonymizer';
+import { anonymize, deanonymize, computePrivacyScore, getCategoryLabel, getCategoryColor, getThreatLevel } from './lib/anonymizer';
 import { sendToClaude } from './lib/claude';
 import { writeToMidnight, connectLaceWallet } from './lib/midnight';
 import {
@@ -46,6 +46,7 @@ function ScoreRing({ score }) {
 
 function TokenBadge({ token, value, category, revealed, onReveal }) {
   const color = getCategoryColor(category);
+  const threat = getThreatLevel(category);
   return (
     <div className="token-row" style={{ '--cat-color': color }}>
       <div className="token-pill" style={{ background: color + '22', borderColor: color + '55' }}>
@@ -54,10 +55,16 @@ function TokenBadge({ token, value, category, revealed, onReveal }) {
       <span className="token-category" style={{ color: 'var(--text-dim)', fontSize: 11 }}>
         {getCategoryLabel(category)}
       </span>
-      <div className="token-value" onClick={onReveal} title="Click to reveal original">
+      <div style={{
+        background: threat.bg, color: threat.color, fontSize: 9, fontWeight: 700, 
+        padding: '2px 6px', borderRadius: 10, textTransform: 'uppercase', marginRight: 'auto'
+      }}>
+        {threat.level}
+      </div>
+      <div className="token-value" onClick={onReveal} title="Click to reveal original" style={{ textAlign: 'right' }}>
         {revealed
           ? <span style={{ fontSize: 12, color: 'var(--text-primary)' }}>{value}</span>
-          : <span style={{ fontSize: 11, color: 'var(--text-dim)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4 }}>
+          : <span style={{ fontSize: 11, color: 'var(--text-dim)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4, justifyContent: 'flex-end' }}>
               <EyeOff size={10} /> hover to reveal
             </span>
         }
@@ -109,6 +116,7 @@ function CommitmentBadge({ commitment }) {
 function MessageBubble({ message, tokenMap }) {
   const isUser = message.role === 'user';
   const [showAnonymized, setShowAnonymized] = useState(false);
+  const [showRaw, setShowRaw] = useState(false);
 
   return (
     <div className={`message-wrapper ${isUser ? 'user' : 'ai'}`}>
@@ -122,13 +130,24 @@ function MessageBubble({ message, tokenMap }) {
           {message.displayContent}
         </div>
         {isUser && message.anonymized && message.anonymized !== message.displayContent && (
-          <button
-            className="show-anonymized-btn"
-            onClick={() => setShowAnonymized(v => !v)}
-          >
-            {showAnonymized ? <ChevronUp size={10} /> : <ChevronDown size={10} />}
-            What AI saw
-          </button>
+          <div style={{ display: 'flex', gap: 10, marginTop: 6 }}>
+            <button
+              className="show-anonymized-btn"
+              onClick={() => setShowAnonymized(v => !v)}
+              style={{ marginTop: 0 }}
+            >
+              {showAnonymized ? <ChevronUp size={10} /> : <ChevronDown size={10} />}
+              What AI saw
+            </button>
+            <button
+              className="show-anonymized-btn"
+              onClick={() => setShowRaw(v => !v)}
+              style={{ marginTop: 0, color: 'var(--red)' }}
+            >
+              {showRaw ? <ChevronUp size={10} /> : <ChevronDown size={10} />}
+              Raw Prompt
+            </button>
+          </div>
         )}
         {showAnonymized && (
           <div className="anonymized-preview">
@@ -137,6 +156,16 @@ function MessageBubble({ message, tokenMap }) {
             </span>
             <code style={{ fontSize: 11, color: 'var(--accent)', wordBreak: 'break-word' }}>
               {message.anonymized}
+            </code>
+          </div>
+        )}
+        {showRaw && (
+          <div className="anonymized-preview" style={{ background: 'rgba(239,68,68,0.05)', borderColor: 'rgba(239,68,68,0.2)' }}>
+            <span style={{ fontSize: 10, color: '#ef4444', display: 'block', marginBottom: 4 }}>
+              Raw unsafe prompt (Never Sent):
+            </span>
+            <code style={{ fontSize: 11, color: '#ef4444', wordBreak: 'break-word' }}>
+              {message.displayContent}
             </code>
           </div>
         )}
@@ -196,6 +225,8 @@ function SettingsModal({ onClose, apiKey, setApiKey }) {
 export default function App() {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
+  const [liveTokens, setLiveTokens] = useState([]);
+  const [liveAnonymized, setLiveAnonymized] = useState('');
   const [tokenMap, setTokenMap] = useState({});
   const [allTokens, setAllTokens] = useState([]);
   const [commitments, setCommitments] = useState([]);
@@ -215,8 +246,6 @@ export default function App() {
   useEffect(() => { if (apiKey) localStorage.setItem('pp_api_key', apiKey); }, [apiKey]);
   useEffect(() => { messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [messages]);
 
-  const privacyScore = computePrivacyScore(allTokens);
-
   const connectWallet = async () => {
     const info = await connectLaceWallet();
     setWalletInfo(info);
@@ -233,6 +262,8 @@ export default function App() {
     const { anonymized, tokenMap: newMap, newTokens } = anonymize(userText, tokenMap);
     setTokenMap(newMap);
     setAllTokens(prev => [...prev, ...newTokens]);
+    setLiveTokens([]);
+    setLiveAnonymized('');
 
     // Add user message
     const userMsg = {
@@ -299,25 +330,41 @@ export default function App() {
   };
 
   const handleInput = (e) => {
-    setInput(e.target.value);
+    const val = e.target.value;
+    setInput(val);
     const ta = textareaRef.current;
     if (ta) { ta.style.height = 'auto'; ta.style.height = Math.min(ta.scrollHeight, 160) + 'px'; }
+    
+    if (val.trim()) {
+      const { anonymized, newTokens } = anonymize(val, tokenMap);
+      setLiveTokens(newTokens);
+      setLiveAnonymized(anonymized);
+    } else {
+      setLiveTokens([]);
+      setLiveAnonymized('');
+    }
   };
 
   const clearSession = () => {
     setMessages([]);
     setTokenMap({});
     setAllTokens([]);
+    setLiveTokens([]);
+    setLiveAnonymized('');
     setCommitments([]);
     setRevealedTokens({});
     conversationHistoryRef.current = [];
   };
 
-  const latestCommitment = commitments[commitments.length - 1];
-  const categoryStats = allTokens.reduce((acc, t) => {
+  const combinedTokens = [...allTokens, ...liveTokens];
+  const privacyScore = computePrivacyScore(combinedTokens);
+  
+  const categoryStats = combinedTokens.reduce((acc, t) => {
     acc[t.category] = (acc[t.category] || 0) + 1;
     return acc;
   }, {});
+
+  const userMessagesCount = messages.filter(m => m.role === 'user').length;
 
   const demoPrompt = "I'm John Smith, SSN 423-55-8821, I was diagnosed with Type 2 diabetes last year and my annual salary is $142,000. Am I eligible for this health plan?";
 
@@ -471,14 +518,27 @@ export default function App() {
                 <div className="score-meta">
                   <div className="score-label">Privacy Score</div>
                   <div className="score-sub">
-                    {allTokens.length === 0
-                      ? 'No messages yet'
-                      : `${allTokens.length} item${allTokens.length > 1 ? 's' : ''} protected`
+                    {combinedTokens.length === 0
+                      ? 'No items detected'
+                      : `${combinedTokens.length} item${combinedTokens.length > 1 ? 's' : ''} protected`
                     }
                   </div>
-                  {latestCommitment && <CommitmentBadge commitment={latestCommitment} />}
+                  {commitments.length > 0 && <CommitmentBadge commitment={commitments[commitments.length - 1]} />}
                 </div>
               </div>
+
+              {/* Live Preview Box */}
+              {input.trim() && (
+                <div className="panel-section" style={{ background: 'rgba(219,39,119,0.03)' }}>
+                  <h4 className="panel-section-title" style={{ display: 'flex', alignItems: 'center', gap: 6, color: 'var(--accent)', marginBottom: 8 }}>
+                    <div className="wallet-dot" style={{ background: 'var(--accent)' }} />
+                    Live Anonymization
+                  </h4>
+                  <code style={{ fontSize: 11, color: 'var(--text-primary)', wordBreak: 'break-word', display: 'block' }}>
+                    {liveAnonymized}
+                  </code>
+                </div>
+              )}
 
               {/* Category breakdown */}
               {Object.keys(categoryStats).length > 0 && (
@@ -497,12 +557,12 @@ export default function App() {
               )}
 
               {/* Tokens table */}
-              {allTokens.length > 0 && (
+              {combinedTokens.length > 0 && (
                 <div className="panel-section">
                   <h4 className="panel-section-title">Redaction Map</h4>
                   <p className="panel-section-hint">Hover to reveal original values</p>
                   <div className="tokens-list">
-                    {allTokens.map((t, i) => (
+                    {combinedTokens.map((t, i) => (
                       <TokenBadge
                         key={i}
                         token={t.token}
@@ -516,12 +576,27 @@ export default function App() {
                 </div>
               )}
 
-              {allTokens.length === 0 && (
-                <div className="panel-empty">
+              {combinedTokens.length === 0 && !input.trim() && (
+                <div className="panel-empty" style={{ flex: 1 }}>
                   <ShieldCheck size={28} color="var(--accent-glow)" />
-                  <p>Start chatting to see your privacy shield in action.</p>
+                  <p>Start typing to see your privacy shield in action.</p>
                 </div>
               )}
+
+              {/* Streak Counter */}
+              <div className="panel-section" style={{ borderTop: '1px solid var(--border)', borderBottom: 'none', background: 'var(--bg-hover)', marginTop: 'auto', padding: '16px 20px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                  <div style={{ background: 'var(--accent-dim)', padding: 8, borderRadius: '50%' }}>
+                    <ShieldCheck size={18} color="var(--accent)" />
+                  </div>
+                  <div>
+                    <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-primary)' }}>Protection Streak</div>
+                    <div style={{ fontSize: 10, color: 'var(--text-dim)', marginTop: 2 }}>
+                      {userMessagesCount} message{userMessagesCount !== 1 ? 's' : ''} sent. 0 bytes of raw PII ever transmitted.
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
           )}
 

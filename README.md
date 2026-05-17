@@ -12,11 +12,11 @@
 
 <br/>
 
-**[🚀 Live Demo](https://zeroprompt.vercel.app)** · **[📹 Demo Video](#)** · **[📖 Architecture](#architecture)**
+**[🚀 Live Demo](https://privateprompt.vercel.app)** · **[📹 Demo Video](#)** · **[📖 Architecture](#architecture)**
 
 <br/>
 
-![ZeroPrompt Screenshot](https://zeroprompt.vercel.app/og-preview.png)
+![ZeroPrompt Screenshot](https://privateprompt.vercel.app/og-preview.png)
 
 </div>
 
@@ -151,8 +151,8 @@ contract PrivacyReceipt {
 
 ```bash
 # 1. Clone the repo
-git clone https://github.com/Chaithanya5gif/zeroprompt-v2.git
-cd zeroprompt-v2
+git clone https://github.com/Chaithanya5gif/privateprompt-v2.git
+cd privateprompt-v2
 
 # 2. Install dependencies
 npm install
@@ -182,7 +182,7 @@ Watch the Privacy Shield panel detect and redact 4 sensitive items in real time.
 ## 📁 Project Structure
 
 ```
-zeroprompt-v2/
+privateprompt-v2/
 ├── src/
 │   ├── lib/
 │   │   ├── anonymizer.js      # PII detection engine (NLP + regex + dictionaries)
@@ -266,7 +266,7 @@ The application features a polished **White and Pink Glassmorphism** design syst
 npx vercel --prod
 ```
 
-The app is already live at **[https://zeroprompt.vercel.app](https://zeroprompt.vercel.app)**
+The app is already live at **[https://privateprompt.vercel.app](https://privateprompt.vercel.app)**
 
 ---
 

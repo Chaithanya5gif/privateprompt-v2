@@ -247,13 +247,15 @@ Tokens are visually categorized by Threat Level:
 
 ---
 
-## 🎨 Premium UI & Real-Time UX
+## 🎨 Premium V3 Features & UX
 
-The V2 application features a polished **White and Pink Glassmorphism** design system with dynamic, real-time feedback:
-- **Live Anonymization Preview:** The Privacy Shield panel updates character-by-character as you type, showing exactly what is being redacted before you hit send.
-- **Threat Level Badges:** Visual severity indicators on the Redaction Map.
-- **Raw Prompt Toggle:** A "What if you hadn't used PrivatePrompt" toggle to viscerally compare your raw, dangerous prompt with the safe anonymized version sent to the AI.
-- **Protection Streak Counter:** A live tracker of messages sent and zero bytes of raw PII ever transmitted.
+The application features a polished **White and Pink Glassmorphism** design system with dynamic, real-time feedback and powerful enterprise features:
+- **Client-Side PDF Parsing:** Drag and drop `.pdf` files. The app uses `pdfjs-dist` to extract and mass-redact document text entirely in the browser before sending.
+- **Dark Web Value Estimator:** The Protection Streak counter calculates the black-market monetary value of the PII you've protected (e.g., SSN = $15, Medical Record = $250).
+- **Enterprise Custom Vault:** In settings, users can define proprietary terms (e.g., "Project Titan") that are forcefully redacted as `[CONFIDENTIAL_X]`.
+- **Local AI Emergency Fallback:** If a prompt's Privacy Score drops below 30 or contains 5+ critical items, the app intercepts the cloud API call and reroutes to a simulated Local Browser AI, demonstrating true Edge AI safety.
+- **Live Anonymization Preview:** The Privacy Shield panel updates character-by-character as you type.
+- **Raw Prompt Toggle:** A visceral "What AI saw" vs "Raw Prompt" comparison.
 
 ---
 
@@ -271,10 +273,8 @@ The app is already live at **[https://privateprompt.vercel.app](https://privatep
 ## 🗺️ Roadmap
 
 - [ ] Real Midnight mainnet tx (requires Lace wallet with testnet funds)
-- [ ] `most_frequent` and `median` imputation via Array API fallback
 - [ ] Enterprise API: REST endpoint for programmatic anonymization
 - [ ] HIPAA compliance audit trail export (PDF)
-- [ ] Custom entity dictionaries per organization
 - [ ] Multi-language PII detection (Spanish, French, German)
 
 ---

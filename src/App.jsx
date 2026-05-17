@@ -5,7 +5,8 @@ import { writeToMidnight, connectLaceWallet } from './lib/midnight';
 import {
   Shield, ShieldCheck, Lock, Eye, EyeOff, Send, Settings,
   ChevronDown, ChevronUp, Zap, Link, Copy, Check,
-  AlertCircle, Wallet, X, RefreshCw, ExternalLink, Upload, FileText, Bot
+  AlertCircle, Wallet, X, RefreshCw, ExternalLink, Upload, FileText, Bot,
+  Sparkles, Menu
 } from 'lucide-react';
 import * as pdfjsLib from 'pdfjs-dist';
 
@@ -421,7 +422,7 @@ export default function App() {
     } finally {
       setIsLoading(false);
     }
-  }, [input, isLoading, tokenMap, apiKey, sessionNonce]);
+  }, [input, isLoading, tokenMap, apiKey, sessionNonce, customVaultTerms]);
 
   const handleKeyDown = (e) => {
     if (e.key === 'Enter' && !e.shiftKey) {
@@ -494,6 +495,18 @@ export default function App() {
     conversationHistoryRef.current = [];
   };
 
+  const [showMobilePanel, setShowMobilePanel] = useState(false);
+  const [showCelebration, setShowCelebration] = useState(false);
+
+  // Trigger celebration on first confirmed commitment
+  useEffect(() => {
+    const confirmed = commitments.filter(c => c.status === 'confirmed');
+    if (confirmed.length === 1) {
+      setShowCelebration(true);
+      setTimeout(() => setShowCelebration(false), 2500);
+    }
+  }, [commitments]);
+
   const combinedTokens = [...allTokens, ...liveTokens];
   const privacyScore = computePrivacyScore(combinedTokens);
   
@@ -509,6 +522,16 @@ export default function App() {
 
   return (
     <div className="app">
+      {/* Celebration overlay */}
+      {showCelebration && (
+        <div className="celebration-overlay">
+          <div className="celebration-content">
+            <Sparkles size={32} color="var(--accent)" />
+            <span>Privacy Commitment Verified on Midnight!</span>
+          </div>
+        </div>
+      )}
+
       {/* Header */}
       <header className="header">
         <div className="header-brand">
@@ -521,6 +544,12 @@ export default function App() {
           </div>
         </div>
         <div className="header-actions">
+          {combinedTokens.length > 0 && (
+            <div className="header-shield-badge">
+              <ShieldCheck size={12} />
+              <span>{combinedTokens.length} protected</span>
+            </div>
+          )}
           {walletInfo ? (
             <div className="wallet-connected">
               <div className="wallet-dot" />
@@ -558,7 +587,17 @@ export default function App() {
               </div>
               <button
                 className="btn-demo"
-                onClick={() => setInput(demoPrompt)}
+                onClick={() => {
+                  setInput(demoPrompt);
+                  const { anonymized, newTokens } = anonymize(demoPrompt, tokenMap, customVaultTerms);
+                  setLiveTokens(newTokens);
+                  setLiveAnonymized(anonymized);
+                  // Also auto-resize textarea on next tick
+                  setTimeout(() => {
+                    const ta = textareaRef.current;
+                    if (ta) { ta.style.height = 'auto'; ta.style.height = Math.min(ta.scrollHeight, 160) + 'px'; }
+                  }, 0);
+                }}
               >
                 <Zap size={13} /> Try Demo Prompt
               </button>
@@ -583,7 +622,7 @@ export default function App() {
           {/* Error */}
           {error && (
             <div className="error-bar">
-              <AlertCircle size={14} />
+              <AlertCircle size={14} color="#dc2626" />
               <span>{error}</span>
               <button className="icon-btn" onClick={() => setError(null)}><X size={12} /></button>
             </div>
@@ -644,11 +683,23 @@ export default function App() {
             <p className="input-hint">
               <Lock size={9} /> Anonymized before sending · No raw data leaves your browser
             </p>
+            <p className="keyboard-hint">
+              <kbd>Enter</kbd> to send · <kbd>Shift + Enter</kbd> for newline
+            </p>
           </div>
         </div>
 
+        {/* Mobile floating panel toggle */}
+        <button
+          className="mobile-panel-toggle"
+          onClick={() => setShowMobilePanel(v => !v)}
+        >
+          <Shield size={16} />
+          {combinedTokens.length > 0 && <span className="mobile-badge-count">{combinedTokens.length}</span>}
+        </button>
+
         {/* Privacy Shield Panel */}
-        <aside className="privacy-panel">
+        <aside className={`privacy-panel ${showMobilePanel ? 'mobile-open' : ''}`}>
           <div className="panel-tabs">
             <button
               className={`panel-tab ${panelTab === 'shield' ? 'active' : ''}`}
@@ -796,6 +847,8 @@ export default function App() {
             </div>
           )}
         </aside>
+        {/* Mobile overlay backdrop */}
+        {showMobilePanel && <div className="mobile-panel-backdrop" onClick={() => setShowMobilePanel(false)} />}
       </div>
 
       {showSettings && (
@@ -814,6 +867,11 @@ export default function App() {
           onClose={() => setSimulatedExplorerData(null)}
         />
       )}
+      {/* Hackathon footer badge */}
+      <div className="hackathon-badge">
+        <Zap size={10} />
+        <span>Built for <strong>Midnight Production Engineering Hackathon</strong></span>
+      </div>
     </div>
   );
 }

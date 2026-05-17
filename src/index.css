@@ -57,6 +57,7 @@ html, body, #root {
     radial-gradient(ellipse 60% 40% at 20% 0%, rgba(219,39,119,0.08) 0%, transparent 60%),
     radial-gradient(ellipse 40% 30% at 80% 100%, rgba(16,185,129,0.06) 0%, transparent 60%),
     var(--bg-base);
+  position: relative;
 }
 
 /* ── Header ────────────────────────────────────────────────────────────────── */
@@ -81,6 +82,12 @@ html, body, #root {
   border: 1px solid var(--border-bright);
   border-radius: var(--radius-sm);
   display: flex; align-items: center; justify-content: center;
+  animation: brand-glow 3s ease-in-out infinite;
+}
+
+@keyframes brand-glow {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(219,39,119,0); }
+  50% { box-shadow: 0 0 12px 2px rgba(219,39,119,0.2); }
 }
 
 .brand-name {
@@ -153,6 +160,19 @@ html, body, #root {
   border-radius: var(--radius-sm);
 }
 
+/* ── Header Shield Badge ──────────────────────────────────────────────────── */
+.header-shield-badge {
+  display: flex; align-items: center; gap: 5px;
+  background: var(--accent-dim);
+  border: 1px solid var(--border-bright);
+  padding: 4px 10px;
+  border-radius: 16px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--accent);
+  animation: fadeIn 0.3s ease;
+}
+
 /* ── Layout ────────────────────────────────────────────────────────────────── */
 .main-layout {
   flex: 1;
@@ -188,6 +208,12 @@ html, body, #root {
   border-radius: 20px;
   display: flex; align-items: center; justify-content: center;
   margin-bottom: 8px;
+  animation: floatIcon 3s ease-in-out infinite;
+}
+
+@keyframes floatIcon {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-6px); }
 }
 
 .empty-state h2 { font-size: 20px; font-weight: 700; color: var(--text-primary); }
@@ -215,6 +241,20 @@ html, body, #root {
   font-size: 10px; font-weight: 700;
   color: var(--accent);
   flex-shrink: 0;
+}
+
+.how-step {
+  opacity: 0;
+  animation: staggerIn 0.4s ease forwards;
+}
+.how-step:nth-child(1) { animation-delay: 0.1s; }
+.how-step:nth-child(2) { animation-delay: 0.25s; }
+.how-step:nth-child(3) { animation-delay: 0.4s; }
+.how-step:nth-child(4) { animation-delay: 0.55s; }
+
+@keyframes staggerIn {
+  from { opacity: 0; transform: translateX(-8px); }
+  to { opacity: 1; transform: translateX(0); }
 }
 
 .btn-demo {
@@ -343,10 +383,10 @@ html, body, #root {
 /* ── Error bar ─────────────────────────────────────────────────────────────── */
 .error-bar {
   display: flex; align-items: center; gap: 8px;
-  background: rgba(239,68,68,0.12);
-  border-top: 1px solid rgba(239,68,68,0.25);
+  background: rgba(239,68,68,0.08);
+  border-top: 1px solid rgba(239,68,68,0.2);
   padding: 10px 20px;
-  font-size: 12px; color: #fca5a5;
+  font-size: 12px; color: #dc2626;
 }
 .error-bar > * { flex-shrink: 0; }
 .error-bar span { flex: 1; }
@@ -436,6 +476,26 @@ html, body, #root {
   display: flex; align-items: center; gap: 4px;
   font-size: 10px; color: var(--text-dim);
   margin-top: 8px;
+}
+
+.keyboard-hint {
+  font-size: 9px;
+  color: var(--text-dim);
+  margin-top: 4px;
+  opacity: 0.7;
+}
+
+.keyboard-hint kbd {
+  display: inline-block;
+  background: var(--bg-hover);
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  padding: 0px 4px;
+  font-family: 'Inter', sans-serif;
+  font-size: 9px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  line-height: 1.6;
 }
 
 /* ── Privacy Panel ─────────────────────────────────────────────────────────── */
@@ -658,6 +718,143 @@ html, body, #root {
 
 /* ── Responsive ────────────────────────────────────────────────────────────── */
 @media (max-width: 768px) {
-  .privacy-panel { display: none; }
+  .privacy-panel {
+    display: none;
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    height: 75vh;
+    z-index: 50;
+    border-radius: 20px 20px 0 0;
+    box-shadow: 0 -10px 40px rgba(0,0,0,0.15);
+    border-top: 2px solid var(--border-bright);
+    animation: slideUpPanel 0.3s ease;
+  }
+  .privacy-panel.mobile-open {
+    display: flex;
+  }
   .brand-tagline { display: none; }
+  .header-shield-badge { display: none; }
+}
+
+@keyframes slideUpPanel {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+
+/* ── Mobile Panel Toggle ──────────────────────────────────────────────────── */
+.mobile-panel-toggle {
+  display: none;
+  position: fixed;
+  bottom: 20px; right: 20px;
+  width: 48px; height: 48px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #ec4899, #db2777);
+  color: white;
+  border: none;
+  cursor: pointer;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 20px rgba(219,39,119,0.4);
+  z-index: 40;
+  transition: transform 0.2s;
+}
+.mobile-panel-toggle:active { transform: scale(0.92); }
+
+.mobile-badge-count {
+  position: absolute;
+  top: -2px; right: -2px;
+  background: #ef4444;
+  color: white;
+  font-size: 9px;
+  font-weight: 700;
+  width: 16px; height: 16px;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+}
+
+.mobile-panel-backdrop {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .mobile-panel-toggle {
+    display: flex;
+  }
+  .mobile-panel-backdrop {
+    display: block;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.3);
+    z-index: 45;
+    animation: fadeIn 0.2s ease;
+  }
+}
+
+/* ── Celebration Overlay ──────────────────────────────────────────────────── */
+.celebration-overlay {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  z-index: 200;
+  display: flex;
+  justify-content: center;
+  padding-top: 80px;
+  pointer-events: none;
+  animation: celebrationFade 2.5s ease forwards;
+}
+
+.celebration-content {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-bright);
+  padding: 14px 24px;
+  border-radius: 14px;
+  box-shadow: 0 8px 40px rgba(219,39,119,0.25), 0 0 0 1px rgba(219,39,119,0.1);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+  animation: celebrationBounce 0.5s cubic-bezier(0.68, -0.55, 0.27, 1.55);
+}
+
+@keyframes celebrationBounce {
+  from { opacity: 0; transform: translateY(-20px) scale(0.9); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes celebrationFade {
+  0%, 75% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+/* ── Hackathon Footer Badge ───────────────────────────────────────────────── */
+.hackathon-badge {
+  position: fixed;
+  bottom: 0; left: 0; right: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 5px;
+  background: linear-gradient(90deg, rgba(219,39,119,0.06), rgba(16,185,129,0.06));
+  border-top: 1px solid var(--border);
+  font-size: 10px;
+  color: var(--text-dim);
+  z-index: 5;
+}
+
+.hackathon-badge strong {
+  color: var(--accent);
+}
+
+/* ── Token hover reveal animation ─────────────────────────────────────────── */
+.token-value {
+  flex: 1;
+  min-width: 0;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.token-row:hover .token-value {
+  transform: translateX(2px);
 }

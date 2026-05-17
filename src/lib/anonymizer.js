@@ -82,6 +82,13 @@ const PATTERNS = [
     regex: /\b(i am|i'm|im|aged?)\s+\d{1,3}\s*(years?\s*old|yo)\b/gi,
   },
   {
+    // Catches names introduced by common phrases:
+    // "I'm John Smith", "My name is Jane", "name: Dr. Smith"
+    // Uses lookbehind so only the name portion is replaced
+    category: 'NAME',
+    regex: /(?<=\b(?:I'm|I am|my name is|name is|name:)\s)[A-Z][a-z]+(?:\s+[A-Z][a-z]+)*/g,
+  },
+  {
     category: 'ZIP_CODE',
     regex: /\b\d{5}(-\d{4})?\b/g,
   },
@@ -137,33 +144,35 @@ export function anonymize(text, existingTokenMap = {}, customVaultTerms = []) {
     result = result.replace(termRegex, (match) => getToken('CONFIDENTIAL', match));
   }
 
-  // 1. Regex-based patterns (apply before NLP to avoid double-matching)
+  // 1. Run NLP on the ORIGINAL text first (before any tokenization)
+  //    to accurately detect named entities that would be mangled by bracket tokens
+  const doc = nlp(text);
+  const nlpPeople = doc.people().out('array');
+  const nlpOrgs = doc.organizations().out('array');
+  const nlpPlaces = doc.places().out('array');
+
+  // 2. Regex-based patterns
   for (const { category, regex } of PATTERNS) {
     regex.lastIndex = 0;
     result = result.replace(regex, (match) => getToken(category, match));
   }
 
-  // 2. Medical conditions dictionary (case-insensitive, whole word)
+  // 3. Medical conditions dictionary (case-insensitive, whole word)
   for (const condition of MEDICAL_CONDITIONS) {
     const escapedCondition = condition.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
     const condRegex = new RegExp(`\\b${escapedCondition}\\b`, 'gi');
     result = result.replace(condRegex, (match) => getToken('MEDICAL', match));
   }
 
-  // 3. Drug names dictionary
+  // 4. Drug names dictionary
   for (const drug of DRUG_NAMES) {
     const escapedDrug = drug.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
     const drugRegex = new RegExp(`\\b${escapedDrug}\\b`, 'gi');
     result = result.replace(drugRegex, (match) => getToken('DRUG', match));
   }
 
-  // 4. NLP - Named Entity Recognition via Compromise.js
-  // Only run on text that hasn't been tokenized yet
-  const doc = nlp(result);
-
-  // Extract people names
-  const people = doc.people().out('array');
-  for (const name of people) {
+  // 5. Apply NLP-detected entities (from step 1) on the partially-tokenized result
+  for (const name of nlpPeople) {
     if (name.length > 2 && !name.startsWith('[')) {
       const escapedName = name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
       const nameRegex = new RegExp(`\\b${escapedName}\\b`, 'gi');
@@ -171,9 +180,7 @@ export function anonymize(text, existingTokenMap = {}, customVaultTerms = []) {
     }
   }
 
-  // Extract organizations
-  const orgs = doc.organizations().out('array');
-  for (const org of orgs) {
+  for (const org of nlpOrgs) {
     if (org.length > 2 && !org.startsWith('[')) {
       const escapedOrg = org.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
       const orgRegex = new RegExp(`\\b${escapedOrg}\\b`, 'gi');
@@ -181,9 +188,7 @@ export function anonymize(text, existingTokenMap = {}, customVaultTerms = []) {
     }
   }
 
-  // Extract places
-  const places = doc.places().out('array');
-  for (const place of places) {
+  for (const place of nlpPlaces) {
     if (place.length > 2 && !place.startsWith('[')) {
       const escapedPlace = place.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
       const placeRegex = new RegExp(`\\b${escapedPlace}\\b`, 'gi');

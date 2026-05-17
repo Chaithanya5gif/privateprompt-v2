@@ -234,17 +234,26 @@ Tokens are consistent per session: the same name always gets the same token (`[N
 
 ---
 
-## 📊 Privacy Score
+## 📊 Privacy Score & Threat Levels
 
-Each session receives a real-time privacy score (0–100):
+Each session receives a real-time privacy score (0–100). Our philosophy: **Catching PII is a win.**
+The score remains high (92+) when tokens are successfully detected and protected, rather than penalizing the user for having sensitive data.
 
-| Risk Level | Categories | Penalty |
-|-----------|-----------|---------|
-| 🔴 High | SSN, Credit Card, Medical, Drugs, DOB | -15 per item |
-| 🟡 Medium | Financial, Email, Phone, Name | -8 per item |
-| 🟢 Low | Location, Org, Date, Age, ZIP | -4 per item |
+Tokens are visually categorized by Threat Level:
+- 🔴 **Critical:** SSN, Credit Card, Medical, Drugs, DOB
+- 🟠 **Sensitive:** Financial, Email, Phone, IP Address
+- 🟡 **Personal:** Name, Age
+- ⚪ **Low:** Location, Org, Date, ZIP
 
-Score 100 = nothing sensitive detected. Score 0 = maximum exposure prevented.
+---
+
+## 🎨 Premium UI & Real-Time UX
+
+The V2 application features a polished **White and Pink Glassmorphism** design system with dynamic, real-time feedback:
+- **Live Anonymization Preview:** The Privacy Shield panel updates character-by-character as you type, showing exactly what is being redacted before you hit send.
+- **Threat Level Badges:** Visual severity indicators on the Redaction Map.
+- **Raw Prompt Toggle:** A "What if you hadn't used PrivatePrompt" toggle to viscerally compare your raw, dangerous prompt with the safe anonymized version sent to the AI.
+- **Protection Streak Counter:** A live tracker of messages sent and zero bytes of raw PII ever transmitted.
 
 ---
 

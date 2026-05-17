@@ -516,7 +516,7 @@ export default function App() {
             <Shield size={18} color="var(--accent)" />
           </div>
           <div>
-            <h1 className="brand-name">PrivatePrompt <span className="brand-v2">V2</span></h1>
+            <h1 className="brand-name">ZeroPrompt <span className="brand-v2">V2</span></h1>
             <p className="brand-tagline">Verifiable Blind AI</p>
           </div>
         </div>

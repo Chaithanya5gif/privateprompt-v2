@@ -1,5 +1,5 @@
 /**
- * PrivatePrompt V2 — Claude API Integration
+ * ZeroPrompt — Claude API Integration
  * Sends anonymized prompts to Claude and returns AI responses.
  */
 

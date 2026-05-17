@@ -1,5 +1,5 @@
 /**
- * PrivatePrompt V2 — Anonymizer Engine
+ * ZeroPrompt — Anonymizer Engine
  * Client-side PII detection and tokenization.
  * Token map NEVER leaves the browser.
  */

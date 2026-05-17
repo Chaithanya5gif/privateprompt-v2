@@ -7,16 +7,16 @@
 
 <br/><br/>
 
-<h1>🛡️ PrivatePrompt V2</h1>
+<h1>🛡️ ZeroPrompt</h1>
 <h3>Verifiable Blind AI — The first AI chat that cryptographically proves it never saw your secrets.</h3>
 
 <br/>
 
-**[🚀 Live Demo](https://privateprompt.vercel.app)** · **[📹 Demo Video](#)** · **[📖 Architecture](#architecture)**
+**[🚀 Live Demo](https://zeroprompt.vercel.app)** · **[📹 Demo Video](#)** · **[📖 Architecture](#architecture)**
 
 <br/>
 
-![PrivatePrompt V2 Screenshot](https://privateprompt.vercel.app/og-preview.png)
+![ZeroPrompt Screenshot](https://zeroprompt.vercel.app/og-preview.png)
 
 </div>
 
@@ -26,7 +26,7 @@
 
 Every AI assistant today — ChatGPT, Claude, Gemini — receives your raw sensitive data. Your medical conditions, SSNs, salary, legal issues go to a third-party server **in plaintext**. Users have zero proof of what the AI actually received. They must trust the company's privacy policy — a legal document, not a technical guarantee.
 
-**Midnight exists to replace trust with proof.** PrivatePrompt V2 applies that principle to AI.
+**Midnight exists to replace trust with proof.** ZeroPrompt applies that principle to AI.
 
 ---
 
@@ -151,8 +151,8 @@ contract PrivacyReceipt {
 
 ```bash
 # 1. Clone the repo
-git clone https://github.com/Chaithanya5gif/privateprompt-v2.git
-cd privateprompt-v2
+git clone https://github.com/Chaithanya5gif/zeroprompt-v2.git
+cd zeroprompt-v2
 
 # 2. Install dependencies
 npm install
@@ -182,7 +182,7 @@ Watch the Privacy Shield panel detect and redact 4 sensitive items in real time.
 ## 📁 Project Structure
 
 ```
-privateprompt-v2/
+zeroprompt-v2/
 ├── src/
 │   ├── lib/
 │   │   ├── anonymizer.js      # PII detection engine (NLP + regex + dictionaries)
@@ -266,7 +266,7 @@ The application features a polished **White and Pink Glassmorphism** design syst
 npx vercel --prod
 ```
 
-The app is already live at **[https://privateprompt.vercel.app](https://privateprompt.vercel.app)**
+The app is already live at **[https://zeroprompt.vercel.app](https://zeroprompt.vercel.app)**
 
 ---
 

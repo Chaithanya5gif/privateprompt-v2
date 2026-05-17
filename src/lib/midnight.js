@@ -1,5 +1,5 @@
 /**
- * PrivatePrompt V2 — Midnight Blockchain Integration
+ * ZeroPrompt — Midnight Blockchain Integration
  * Writes SHA-256 commitment hashes to Midnight smart contract.
  * Uses mock implementation for demo if Midnight SDK unavailable.
  */

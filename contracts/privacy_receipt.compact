@@ -1,5 +1,5 @@
 // privacy_receipt.compact
-// PrivatePrompt V2 — Midnight Smart Contract
+// ZeroPrompt — Midnight Smart Contract
 // Stores SHA-256 commitment hashes proving AI only received anonymized data.
 //
 // Deployed on: Midnight Mainnet (March 2026)

@@ -10,17 +10,6 @@
 <h1>🛡️ ZeroPrompt</h1>
 <h3>Verifiable Blind AI — The first AI chat that cryptographically proves it never saw your secrets.</h3>
 
-<br/>
-
-**[🚀 Live Demo](https://privateprompt.vercel.app)** · **[📹 Demo Video](#)** · **[📖 Architecture](#architecture)**
-
-<br/>
-
-![ZeroPrompt Screenshot](https://privateprompt.vercel.app/og-preview.png)
-
-</div>
-
----
 
 ## ✨ The Problem
 

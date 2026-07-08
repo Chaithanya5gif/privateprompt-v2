@@ -604,17 +604,6 @@ html, body, #root {
 }
 
 /* ── Commitments ───────────────────────────────────────────────────────────── */
-.commitment-badge { display: flex; flex-direction: column; gap: 4px; margin-top: 8px; }
-.commitment-status { display: flex; align-items: center; gap: 6px; }
-.status-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; animation: pulse-dot 2s ease-in-out infinite; }
-.commitment-hash { display: flex; align-items: center; gap: 6px; }
-.explorer-link { display: flex; align-items: center; gap: 4px; text-decoration: none; }
-.explorer-link:hover { text-decoration: underline; }
-
-.commitments-list { display: flex; flex-direction: column; gap: 8px; padding: 0 20px 16px; }
-.commitment-card { background: var(--bg-elevated); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 12px; }
-.commitment-card-header { display: flex; align-items: flex-start; gap: 10px; }
-.commitment-index { font-size: 10px; color: var(--text-dim); font-weight: 600; min-width: 20px; }
 
 .midnight-info {
   display: flex; align-items: flex-start; gap: 10px;
